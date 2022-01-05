@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { v4 as generateUUID } from 'uuid';
+import { v4 as generateUU_id } from 'uuid';
 
 import { CreateOrUpdatePlayerDTO } from './dtos/create-update-player.dto';
 import { Player } from './interfaces/player.interface';
@@ -26,15 +26,15 @@ export class PlayersService {
     return this.playersRepository;
   }
 
-  async findPlayerById(id: string): Promise<Player> {
-    const playerExists = this.playersRepository.find((p) => p.id === id);
+  async findPlayerBy_id(_id: string): Promise<Player> {
+    const playerExists = this.playersRepository.find((p) => p._id === _id);
     if (!playerExists) throw new NotFoundException('Player not found!');
 
     return playerExists;
   }
 
-  async deleteById(id: string) {
-    const player = await this.findPlayerById(id);
+  async deleteBy_id(_id: string) {
+    const player = await this.findPlayerBy_id(_id);
     const playerIndex = this.playersRepository.indexOf(player);
     this.playersRepository.splice(playerIndex, 1);
   }
@@ -58,7 +58,7 @@ export class PlayersService {
     createOrUpdatePlayer: CreateOrUpdatePlayerDTO,
   ): Promise<void> {
     const player: Player = {
-      id: generateUUID(),
+      _id: generateUU_id(),
       ranking: 'F',
       positionOnRanking: 1000,
       urlPlayerPhoto: '',

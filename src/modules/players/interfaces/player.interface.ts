@@ -1,5 +1,6 @@
-interface Player {
-  readonly id: string;
+import { Document } from 'mongoose';
+
+interface Player extends Document {
   readonly phone: string;
   readonly email: string;
   readonly name: string;
