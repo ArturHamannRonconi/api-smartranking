@@ -1,70 +1,50 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { v4 as generateUU_id } from 'uuid';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 import { CreateOrUpdatePlayerDTO } from './dtos/create-update-player.dto';
 import { Player } from './interfaces/player.interface';
 
 @Injectable()
 export class PlayersService {
-  private logger = new Logger();
-  private playersRepository: Player[] = [];
+  constructor(
+    @InjectModel('player') private readonly playerRepository: Model<Player>,
+  ) {}
 
-  async createOrUpdatePlayer(
-    createOrUpdatePlayer: CreateOrUpdatePlayerDTO,
-  ): Promise<void> {
-    const playerAlreadyExists = await this.findPlayerByEmail(
-      createOrUpdatePlayer.email,
-    );
+  async createOrUpdatePlayer({
+    email,
+    name,
+    phone,
+  }: CreateOrUpdatePlayerDTO): Promise<void> {
+    const playerAlreadyExists = await this.playerRepository
+      .findOne({ email })
+      .exec();
 
     if (playerAlreadyExists)
-      await this.updatePlayer(playerAlreadyExists, createOrUpdatePlayer);
+      await this.playerRepository.updateOne(
+        { email },
+        { $set: { name, phone } },
+      );
 
-    await this.createPlayer(createOrUpdatePlayer);
+    await this.playerRepository.create({
+      email,
+      name,
+      phone,
+    });
   }
 
   async findPlayers(): Promise<Player[]> {
-    return this.playersRepository;
+    return this.playerRepository.find();
   }
 
-  async findPlayerBy_id(_id: string): Promise<Player> {
-    const playerExists = this.playersRepository.find((p) => p._id === _id);
+  async findPlayerByid(_id: string): Promise<Player> {
+    const playerExists = await this.playerRepository.findById(_id);
     if (!playerExists) throw new NotFoundException('Player not found!');
 
     return playerExists;
   }
 
-  async deleteBy_id(_id: string) {
-    const player = await this.findPlayerBy_id(_id);
-    const playerIndex = this.playersRepository.indexOf(player);
-    this.playersRepository.splice(playerIndex, 1);
-  }
-
-  private async findPlayerByEmail(email: string) {
-    return this.playersRepository.find((p) => p.email === email);
-  }
-
-  private async updatePlayer(
-    player: Player,
-    createOrUpdatePlayer: CreateOrUpdatePlayerDTO,
-  ): Promise<void> {
-    const playerIndex = this.playersRepository.indexOf(player);
-    this.playersRepository[playerIndex] = {
-      ...player,
-      ...createOrUpdatePlayer,
-    };
-  }
-
-  private async createPlayer(
-    createOrUpdatePlayer: CreateOrUpdatePlayerDTO,
-  ): Promise<void> {
-    const player: Player = {
-      _id: generateUU_id(),
-      ranking: 'F',
-      positionOnRanking: 1000,
-      urlPlayerPhoto: '',
-      ...createOrUpdatePlayer,
-    };
-
-    this.playersRepository.push(player);
+  async deleteByid(_id: string): Promise<void> {
+    await this.playerRepository.deleteOne({ _id });
   }
 }

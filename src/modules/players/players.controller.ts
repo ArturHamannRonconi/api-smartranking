@@ -23,11 +23,11 @@ export class PlayersController {
 
   @Get(':id')
   async findPlayerById(@Param('id') id: string): Promise<Player> {
-    return this.playersService.findPlayerById(id);
+    return this.playersService.findPlayerByid(id);
   }
 
   @Delete(':id')
   async deleteById(@Param('id') id: string): Promise<void> {
-    return this.playersService.deleteById(id);
+    return this.playersService.deleteByid(id);
   }
 }
