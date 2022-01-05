@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { CreateOrUpdatePlayerDTO } from './dtos/create-update-player.dto';
+import { CreatePlayerDTO } from './dtos/create-player.dto';
+import { UpdatePlayerDTO } from './dtos/update-player.dto';
 import { Player } from './interfaces/player.interface';
 
 @Injectable()
@@ -11,26 +16,22 @@ export class PlayersService {
     @InjectModel('player') private readonly playerRepository: Model<Player>,
   ) {}
 
-  async createOrUpdatePlayer({
-    email,
-    name,
-    phone,
-  }: CreateOrUpdatePlayerDTO): Promise<void> {
-    const playerAlreadyExists = await this.playerRepository
-      .findOne({ email })
-      .exec();
+  async createPlayer({ name, email, phone }: CreatePlayerDTO): Promise<void> {
+    const playerAlreadyExists = await this.playerRepository.exists({
+      $or: [{ email }, { phone }],
+    });
 
     if (playerAlreadyExists)
-      await this.playerRepository.updateOne(
-        { email },
-        { $set: { name, phone } },
-      );
+      throw new ConflictException('Player already exists!');
 
-    await this.playerRepository.create({
-      email,
-      name,
-      phone,
-    });
+    await this.playerRepository.create({ name, email, phone });
+  }
+
+  async updatePlayer(
+    updatePlayer: UpdatePlayerDTO,
+    _id: string,
+  ): Promise<void> {
+    await this.playerRepository.updateOne({ _id }, { $set: updatePlayer });
   }
 
   async findPlayers(): Promise<Player[]> {
